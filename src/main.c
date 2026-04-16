@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include "aura.h"
 #include "core/audio_io.h"
+#include "dsp/master_bus.h"
 
 int main(int argc, char* argv[]) {
+
+    // --- CONFIG & INPUT ---
 
     if (argc < 3) {
         printf("Usage: %s <input.wav> <output.wav>\n", argv[0]);
@@ -22,6 +25,14 @@ int main(int argc, char* argv[]) {
     }
 
     printf("File sucessfully loaded!\n");
+
+    // --- DSP PROCESSING ---
+
+    float gain_change = -12.0f;
+    printf("Processing: Applying %.1f dB global gain. . .\n", gain_change);
+    apply_global_gain(buffer, gain_change);
+
+    // --- OUTPUT ---
 
     printf("Writing to %s\n", output_file);
     if (save_wav(buffer, output_file) == 0) {

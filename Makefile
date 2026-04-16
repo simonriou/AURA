@@ -3,7 +3,7 @@ BREW_PREFIX = $(shell brew --prefix)
 # Compiler settings
 CC = gcc
 CFLAGS = -Wall -Wextra -O3 -I./include -I$(BREW_PREFIX)/include
-LDFLAGS = -L$(BREW_PREFIX)/lib -lsndfile
+LDFLAGS = -L$(BREW_PREFIX)/lib -lsndfile -lm
 
 # Directories
 SRC_DIR = src
