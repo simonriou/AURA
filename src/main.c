@@ -28,9 +28,12 @@ int main(int argc, char* argv[]) {
 
     // --- DSP PROCESSING ---
 
-    float gain_change = -12.0f;
+    float gain_change = 24.0f;
     printf("Processing: Applying %.1f dB global gain. . .\n", gain_change);
     apply_global_gain(buffer, gain_change);
+
+    printf("Processing: Applying Hard Clipper. . .\n");
+    apply_hard_clip(buffer);
 
     // --- OUTPUT ---
 
