@@ -5,6 +5,7 @@
 #include "core/audio_io.h"
 #include "dsp/master_bus.h"
 #include "dsp/biquad.h"
+#include "dsp/analysis.h"
 
 int main(int argc, char* argv[]) {
 
@@ -28,6 +29,13 @@ int main(int argc, char* argv[]) {
 
     printf("File sucessfully loaded!\n");
 
+    // --- ANALYSIS ---
+
+    printf("Analyzing: Running envelope follower. . .\n");
+    EnvelopeFollower env;
+    env_init(&env, 5.0f, 100.0f, buffer->sample_rate);
+    env_print_ascii(&env, buffer);
+
     // --- DSP PROCESSING ---
 
     float gain_change = 0.0f;
@@ -35,7 +43,7 @@ int main(int argc, char* argv[]) {
     apply_global_gain(buffer, gain_change);
 
     float cutoff = 400; float q = 0.707;
-    printf("Processing: Applying Low-Pass Filter at %.1f Hz with Q = %.1f", cutoff, q);
+    printf("Processing: Applying Low-Pass Filter at %.1f Hz with Q = %.1f\n", cutoff, q);
     BiquadFilter lpf;
     biquad_init(&lpf);
     biquad_calc_lowpass(&lpf, cutoff, buffer->sample_rate, q);
