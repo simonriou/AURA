@@ -7,6 +7,12 @@
 #include "dsp/biquad.h"
 #include "dsp/analysis.h"
 
+int compare_floats(const void* a, const void* b) {
+    float fa = *(const float*)a;
+    float fb = *(const float*)b;
+    return (fa > fb) - (fa < fb);
+}
+
 int main(int argc, char* argv[]) {
 
     // --- CONFIG & INPUT ---
@@ -32,9 +38,57 @@ int main(int argc, char* argv[]) {
     // --- ANALYSIS ---
 
     printf("Analyzing: Running envelope follower. . .\n");
+
     EnvelopeFollower env;
     env_init(&env, 5.0f, 100.0f, buffer->sample_rate);
-    env_print_ascii(&env, buffer);
+
+    TransientDetector td;
+    trans_init(&td, 0.0025f, 50.0f, buffer->sample_rate);
+
+    env_print_ascii(&env, &td, buffer);
+
+    printf("Analyzing: Running YIN pitch detection. . .\n");
+
+    YinDetector yin;
+    int window_size = 2048;
+    yin_init(&yin, window_size, 0.25);
+
+    int max_windows = 9;
+    int hop_size = 512;
+    float collected_pitches[9];
+    int valid_pitch_count = 0;
+
+    long long start_frame = buffer->sample_rate * 0.05f;
+
+    for (int w = 0; w < max_windows; w++) {
+        long long current_frame = start_frame + (w * hop_size);
+
+        if (current_frame + window_size < buffer->num_frames) {
+
+            float mono_block[2048];
+            for (int i = 0; i < window_size; i++) {
+                mono_block[i] = buffer->samples[(current_frame + i) * buffer->channels];
+            }
+
+            float pitch = yin_process(&yin, mono_block, buffer->sample_rate);
+
+            if (pitch > 0.0f) {
+                collected_pitches[valid_pitch_count] = pitch;
+                valid_pitch_count++;
+            }
+        }
+    }
+
+    if (valid_pitch_count >= (max_windows / 3)) {
+        qsort(collected_pitches, valid_pitch_count, sizeof(float), compare_floats);
+        float final_macro_pitch = collected_pitches[valid_pitch_count / 2];
+
+        printf("Pitch result: %.2f Hz (%d/%d windows agreed)\n", final_macro_pitch, valid_pitch_count, max_windows);
+    } else {
+        printf("Pitch result: NO PITCH FOUND\n");
+    }
+
+    yin_free(&yin);
 
     // --- DSP PROCESSING ---
 
